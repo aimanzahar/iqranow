@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
-
+import { useAuthStore } from '../store/auth'
+ 
 export default function SignUp() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -9,22 +10,24 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
-
+  const { setToken, loadUser } = useAuthStore()
+ 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     try {
       setLoading(true)
       setError(null)
       const res = await axios.post('/api/register', { name, email, password })
-      localStorage.setItem('token', res.data.token)
-      navigate('/learn')
+      setToken(res.data.token)
+      await loadUser()
+      navigate('/dashboard')
     } catch (e: any) {
       setError(e?.response?.data?.message || e.message)
     } finally {
       setLoading(false)
     }
   }
-
+ 
   return (
     <div className="max-w-md mx-auto px-4 py-14">
       <h2 className="text-3xl font-bold">Create your account</h2>

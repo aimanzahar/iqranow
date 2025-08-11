@@ -21,7 +21,7 @@ def create_app(config_class: type = Config) -> Flask:
 
     # Extensions
     db.init_app(app)
-    JWTManager(app)
+    jwt = JWTManager(app)
 
     # CORS
     CORS(
@@ -29,6 +29,27 @@ def create_app(config_class: type = Config) -> Flask:
         resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
         supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True),
     )
+
+    # JWT error handlers to avoid 422 responses
+    @jwt.unauthorized_loader
+    def unauthorized_callback(reason: str):
+        return jsonify({"message": "Missing or invalid Authorization header", "reason": reason}), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(reason: str):
+        return jsonify({"message": "Invalid token", "reason": reason}), 401
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):  # type: ignore[no-untyped-def]
+        return jsonify({"message": "Token has expired"}), 401
+
+    @jwt.needs_fresh_token_loader
+    def needs_fresh_token_callback(jwt_header, jwt_payload):  # type: ignore[no-untyped-def]
+        return jsonify({"message": "Fresh token required"}), 401
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):  # type: ignore[no-untyped-def]
+        return jsonify({"message": "Token has been revoked"}), 401
 
     # Blueprints
     app.register_blueprint(auth_bp)

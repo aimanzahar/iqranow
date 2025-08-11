@@ -11,7 +11,7 @@ progress_bp = Blueprint("progress", __name__)
 @progress_bp.route("/api/progress", methods=["GET"])
 @jwt_required()
 def get_progress():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     sessions = (
         RecitationSession.query.filter_by(user_id=user_id)

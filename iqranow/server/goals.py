@@ -9,7 +9,7 @@ goals_bp = Blueprint("goals", __name__)
 @goals_bp.route("/api/goals", methods=["GET"])
 @jwt_required()
 def get_goals():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     goals = ProgressGoal.query.filter_by(user_id=user_id).order_by(ProgressGoal.created_at.desc()).all()
     return jsonify({"goals": [g.to_dict() for g in goals]}), 200
 
@@ -17,7 +17,7 @@ def get_goals():
 @goals_bp.route("/api/goals", methods=["POST"])
 @jwt_required()
 def set_goals():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json() or {}
     daily_verses = data.get("dailyVerses")
     daily_minutes = data.get("dailyMinutes")

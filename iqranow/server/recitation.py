@@ -49,7 +49,7 @@ def transcribe_with_google(audio_content: bytes, mime_type: str, language_code: 
 @recite_bp.route("/api/recitation", methods=["POST"])
 @jwt_required()
 def recitation():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     if "audio" not in request.files:
         return jsonify({"message": "Audio file is required"}), 400

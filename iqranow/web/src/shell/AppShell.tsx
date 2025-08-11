@@ -1,6 +1,8 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import AccessibilityToolbar from '../components/AccessibilityToolbar'
+import { useEffect, useState } from 'react'
+import { useAuthStore } from '../store/auth'
 
 function NavLink({ to, label }: { to: string; label: string }) {
   const location = useLocation()
@@ -19,6 +21,28 @@ function NavLink({ to, label }: { to: string; label: string }) {
 }
 
 export default function AppShell() {
+  const navigate = useNavigate()
+  const { user, token, logout, initializeFromStorage } = useAuthStore()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    initializeFromStorage()
+  }, [initializeFromStorage])
+
+  function handleLogout() {
+    logout()
+    setMenuOpen(false)
+    navigate('/signin')
+  }
+
+  const firstName = user?.name?.split(' ')[0] || 'Account'
+  const initials = (user?.name || 'A U')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
   return (
     <div className="min-h-dvh flex flex-col">
       <header className="sticky top-0 z-40 backdrop-blur border-b border-white/10 bg-background/60">
@@ -34,8 +58,51 @@ export default function AppShell() {
           <nav className="flex items-center gap-2" aria-label="Primary">
             <NavLink to="/learn" label="Learn" />
             <NavLink to="/progress" label="Progress" />
-            <NavLink to="/signin" label="Sign In" />
-            <NavLink to="/signup" label="Sign Up" />
+            {token ? (
+              <>
+                <NavLink to="/dashboard" label="Dashboard" />
+                <div className="relative">
+                  <button
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    onClick={() => setMenuOpen((v) => !v)}
+                    className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  >
+                    <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/10 text-white font-bold">
+                      {initials}
+                    </span>
+                    <span className="hidden md:block text-sm text-white/90">{firstName}</span>
+                  </button>
+                  {menuOpen && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 mt-2 w-40 rounded-xl bg-surface/90 backdrop-blur border border-white/10 shadow-lg overflow-hidden"
+                    >
+                      <Link
+                        to="/dashboard"
+                        role="menuitem"
+                        className="block px-3 py-2 text-sm hover:bg-white/10"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        role="menuitem"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-white/10"
+                        onClick={handleLogout}
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <NavLink to="/signin" label="Sign In" />
+                <NavLink to="/signup" label="Sign Up" />
+              </>
+            )}
           </nav>
         </div>
       </header>
